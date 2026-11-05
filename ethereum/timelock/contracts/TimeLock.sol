@@ -36,7 +36,8 @@ import "./interfaces/ITimeLock.sol";
  *         marked `Failed` instead (mirror of the CosmWasm sub-message + reply design).
  *
  * @dev Mapping from the CosmWasm contract:
- *      - `SUBMIT_ROLE` / `EXECUTE_ROLE` / `CANCEL_ROLE` -> same names, OZ AccessControl roles.
+ *      - `SUBMIT_ROLE` / `EXECUTE_ROLE` / `CANCEL_ROLE` / `PAUSE_ROLE` -> same names, OZ
+ *        AccessControl roles.
  *      - Lock delays & pausing are measured by block height (`block.number`): the
  *        `execution_time`/`lock_delay` seconds and `paused_since_block` height of the
  *        CosmWasm twin are unified into one block-height clock on the EVM side.
@@ -56,6 +57,7 @@ contract TimeLock is ITimeLock, AccessControl {
     bytes32 public constant SUBMIT_ROLE = keccak256("SUBMIT_ROLE");
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant CANCEL_ROLE = keccak256("CANCEL_ROLE");
+    bytes32 public constant PAUSE_ROLE = keccak256("PAUSE_ROLE");
 
     // -----     STATE     ------------------------------------------------------
 
@@ -256,6 +258,13 @@ contract TimeLock is ITimeLock, AccessControl {
         _cancel(nonce);
     }
 
+    // -----     PAUSE API (PAUSE_ROLE)     ---------------------------------------
+
+    function pauseSince(uint64 sinceBlock) external onlyRole(PAUSE_ROLE) {
+        pausedSinceBlock = sinceBlock;
+        emit PausedSince(sinceBlock);
+    }
+
     // -----     ADMIN API (DEFAULT_ADMIN_ROLE)     -----------------------------
 
     /**
@@ -279,11 +288,6 @@ contract TimeLock is ITimeLock, AccessControl {
             refundLockDelay,
             nMaxPendingMessages
         );
-    }
-
-    function pauseSince(uint64 sinceBlock) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        pausedSinceBlock = sinceBlock;
-        emit PausedSince(sinceBlock);
     }
 
     function resume() external onlyRole(DEFAULT_ADMIN_ROLE) {

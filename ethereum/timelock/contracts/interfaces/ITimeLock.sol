@@ -187,6 +187,10 @@ interface ITimeLock {
 
     function cancel(uint64 nonce) external;
 
+    // -----     PAUSE API (PAUSE_ROLE)     ---------------------------------------
+
+    function pauseSince(uint64 sinceBlock) external;
+
     // -----     ADMIN API (DEFAULT_ADMIN_ROLE)     -----------------------------
 
     /// @notice Partial state update: a zero value (resp. `address(0)`) keeps the current
@@ -197,8 +201,6 @@ interface ITimeLock {
         uint64 refundLockDelay_,
         uint64 nMaxPendingMessages_
     ) external;
-
-    function pauseSince(uint64 sinceBlock) external;
 
     function resume() external;
 }

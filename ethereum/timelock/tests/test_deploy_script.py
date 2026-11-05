@@ -22,6 +22,7 @@ def test_deploy_script_writes_manifest(tmp_path):
             "submitter_wallet": owner.address,
             "executor_wallet": owner.address,
             "canceller_wallet": owner.address,
+            "pauser_wallet": owner.address,
         }
     }))
 

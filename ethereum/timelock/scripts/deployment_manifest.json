@@ -8,6 +8,7 @@
         },
         "submitter_wallet": "",
         "executor_wallet": "",
-        "canceller_wallet": ""
+        "canceller_wallet": "",
+        "pauser_wallet": ""
     }
 }

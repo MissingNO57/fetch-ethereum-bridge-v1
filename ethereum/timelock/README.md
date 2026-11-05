@@ -25,7 +25,7 @@ Key mappings from the CosmWasm counterpart (see the contract natspec for details
 
 | CosmWasm `contract-timelock` | EVM `TimeLock` |
 |---|---|
-| `SUBMIT_ROLE` / `EXECUTE_ROLE` / `CANCEL_ROLE` | same (OpenZeppelin `AccessControl`) |
+| `SUBMIT_ROLE` / `EXECUTE_ROLE` / `CANCEL_ROLE` / `PAUSE_ROLE` | same (OpenZeppelin `AccessControl`) |
 | pausing by block height | pausing by block height (`pauseSince`/`resume`) |
 | lock delays in seconds (`block.time`) | lock delays in blocks (`block.number`) |
 | `StateUpdate` with `Option` fields | `updateState(...)` - zero value keeps the current one |
@@ -78,7 +78,7 @@ python3.12 -m venv .venv
 
 The deployment is manifest-driven (see `scripts/deployment_manifest.json`): set the
 `bridge` constructor parameter (address of the deployed Bridge contract) and the
-`submitter`/`executor`/`canceller` role wallets for the target network, then:
+`submitter`/`executor`/`canceller`/`pauser` role wallets for the target network, then:
 
 ```shell
 .venv/bin/ape run deploy --network ethereum:mainnet

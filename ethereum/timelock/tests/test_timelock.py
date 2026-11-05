@@ -25,6 +25,7 @@ ADMIN_ROLE = b"\x00" * 32  # DEFAULT_ADMIN_ROLE == 0
 SUBMIT_ROLE = keccak(text="SUBMIT_ROLE")
 EXECUTE_ROLE = keccak(text="EXECUTE_ROLE")
 CANCEL_ROLE = keccak(text="CANCEL_ROLE")
+PAUSE_ROLE = keccak(text="PAUSE_ROLE")
 
 TX_HASH = b"\x11" * 32
 
@@ -70,13 +71,18 @@ def nobody():
     return accounts.test_accounts[4]
 
 
+@pytest.fixture(scope="module")
+def pauser():
+    return accounts.test_accounts[5]
+
+
 @pytest.fixture()
 def bridge_mock(owner):
     return owner.deploy(project.BridgeRelayerMock)
 
 
 @pytest.fixture()
-def timelock(owner, bridge_mock, submitter, executor, canceller):
+def timelock(owner, bridge_mock, submitter, executor, canceller, pauser):
     contract = owner.deploy(
         project.TimeLock,
         bridge_mock.address,
@@ -88,6 +94,7 @@ def timelock(owner, bridge_mock, submitter, executor, canceller):
     contract.grantRole(SUBMIT_ROLE, submitter.address, sender=owner)
     contract.grantRole(EXECUTE_ROLE, executor.address, sender=owner)
     contract.grantRole(CANCEL_ROLE, canceller.address, sender=owner)
+    contract.grantRole(PAUSE_ROLE, pauser.address, sender=owner)
     return contract
 
 
@@ -416,8 +423,8 @@ class TestNewRelayEon:
 
 class TestPausing:
 
-    def test_pause_resume(self, timelock, owner, submitter, executor):
-        timelock.pauseSince(0, sender=owner)  # paused immediately
+    def test_pause_resume(self, timelock, owner, pauser, submitter, executor):
+        timelock.pauseSince(0, sender=pauser)  # paused immediately
 
         with reverts(timelock.ContractIsPaused):
             submit_reverse_swap(timelock, submitter)
@@ -428,9 +435,9 @@ class TestPausing:
         submit_reverse_swap(timelock, submitter)  # works again
         assert timelock.nPendingMessages() == 1
 
-    def test_pause_since_future_block(self, timelock, owner, submitter):
+    def test_pause_since_future_block(self, timelock, pauser, submitter):
         since = chain.blocks.head.number + 100
-        timelock.pauseSince(since, sender=owner)
+        timelock.pauseSince(since, sender=pauser)
         assert timelock.pausedSinceBlock() == since
 
         submit_reverse_swap(timelock, submitter)  # not yet paused
@@ -438,9 +445,15 @@ class TestPausing:
         with reverts(timelock.ContractIsPaused):
             submit_reverse_swap(timelock, submitter)
 
-    def test_pause_resume_admin_only(self, timelock, nobody):
+    def test_pause_is_pause_role_only(self, timelock, owner, nobody):
+        with reverts():
+            timelock.pauseSince(0, sender=owner)
         with reverts():
             timelock.pauseSince(0, sender=nobody)
+
+    def test_resume_is_admin_only(self, timelock, pauser, nobody):
+        with reverts():
+            timelock.resume(sender=pauser)
         with reverts():
             timelock.resume(sender=nobody)
 

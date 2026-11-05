@@ -3,7 +3,7 @@ use crate::contract::msg::ExecuteMsg;
 use crate::error::{execution_height_overflow_error, too_many_pending_messages_error};
 use crate::queue::NonceType;
 use crate::queue::{BridgeMessagePayload, MessageQueue};
-use crate::roles::{CANCEL_ROLE, EXECUTE_ROLE, SUBMIT_ROLE};
+use crate::roles::{CANCEL_ROLE, EXECUTE_ROLE, PAUSE_ROLE, SUBMIT_ROLE};
 use crate::state::{State, StateUpdate};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -80,9 +80,11 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         // CANCEL_ROLE messages
         ExecuteMsg::Cancel { nonce } => execute_cancel(deps, info, nonce),
 
+        // PAUSE_ROLE messages
+        ExecuteMsg::Pause { since_block } => execute_pause(deps, info, since_block),
+
         // DEFAULT_ADMIN_ROLE messages
         ExecuteMsg::UpdateState(update) => execute_update_state(deps, info, update),
-        ExecuteMsg::Pause { since_block } => execute_pause(deps, info, since_block),
         ExecuteMsg::Resume {} => execute_resume(deps, info),
 
         ExecuteMsg::AccessControl(access_control_msg) => {
@@ -236,8 +238,7 @@ pub fn execute_update_state(
 }
 
 pub fn execute_pause(deps: DepsMut, info: MessageInfo, since_block: u64) -> StdResult<Response> {
-    // Admin only
-    AccessControl::ensure_has_role(deps.storage, DEFAULT_ADMIN_ROLE, &info.sender)?;
+    AccessControl::ensure_has_role(deps.storage, PAUSE_ROLE, &info.sender)?;
     let mut response_handler = ResponseHandler::default();
 
     pause_contract(deps.storage, &mut response_handler, since_block)?;

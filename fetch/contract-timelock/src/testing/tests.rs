@@ -12,7 +12,7 @@ use crate::contract::msg::{
 use crate::state::{State, StateUpdate};
 use crate::testing::helpers::{
     event_names, execute_contract, init_msg, init_state, instantiate_contract, query_contract,
-    setup,
+    setup, setup_with_roles,
 };
 
 fn has_admin_role(deps: Deps, addr: &Addr) -> bool {
@@ -152,18 +152,17 @@ fn update_state_is_admin_only() {
 }
 
 #[test]
-fn pause_and_resume_are_admin_only() {
-    let (mut deps, admin) = setup();
-    let user = deps.api.addr_make("user");
+fn pause_is_pause_role_only_and_resume_is_admin_only() {
+    let (mut deps, actors) = setup_with_roles();
+    let pause = ExecuteMsg::Pause { since_block: 7 };
 
-    assert!(execute_contract(deps.as_mut(), &user, ExecuteMsg::Pause { since_block: 7 }).is_err());
-    let res =
-        execute_contract(deps.as_mut(), &admin, ExecuteMsg::Pause { since_block: 7 }).unwrap();
+    assert!(execute_contract(deps.as_mut(), &actors.admin, pause.clone()).is_err());
+    let res = execute_contract(deps.as_mut(), &actors.pauser, pause).unwrap();
     assert_eq!(event_names(&res), vec!["contract_paused"]);
     assert_eq!(query_paused_since(deps.as_ref()), Some(7));
 
-    assert!(execute_contract(deps.as_mut(), &user, ExecuteMsg::Resume {}).is_err());
-    let res = execute_contract(deps.as_mut(), &admin, ExecuteMsg::Resume {}).unwrap();
+    assert!(execute_contract(deps.as_mut(), &actors.pauser, ExecuteMsg::Resume {}).is_err());
+    let res = execute_contract(deps.as_mut(), &actors.admin, ExecuteMsg::Resume {}).unwrap();
     assert_eq!(event_names(&res), vec!["contract_resumed"]);
     assert_eq!(query_paused_since(deps.as_ref()), None);
 }

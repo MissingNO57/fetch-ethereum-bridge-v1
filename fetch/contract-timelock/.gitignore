@@ -14,3 +14,10 @@
 # IDEs
 *.iml
 .idea
+
+# Output of the docker-compose compile step
+/contract_timelock.wasm
+/checksums.txt
+/contract_cache
+/registry_cache
+/artifacts

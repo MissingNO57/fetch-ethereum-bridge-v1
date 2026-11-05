@@ -63,13 +63,14 @@ pub enum ExecuteMsg {
         nonce: NonceType,
     },
 
-    // Admin
-    /// Changes only the provided fields, omitted or `null` fields keep their current value.
-    UpdateState(StateUpdate),
-
+    // Pause
     Pause {
         since_block: u64,
     },
+
+    // Admin
+    /// Changes only the provided fields, omitted or `null` fields keep their current value.
+    UpdateState(StateUpdate),
 
     Resume {},
 

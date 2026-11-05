@@ -331,7 +331,7 @@ fn pause_blocks_submit_and_execute_but_not_cancel() {
     let pause = ExecuteMsg::Pause {
         since_block: mock_env().block.height,
     };
-    execute_contract(deps.as_mut(), &actors.admin, pause).unwrap();
+    execute_contract(deps.as_mut(), &actors.pauser, pause).unwrap();
     let mature = height() + init_state(&deps.api).refund_lock_delay;
 
     for msg in [refund_id(2), ExecuteMsg::NewRelayEon {}] {

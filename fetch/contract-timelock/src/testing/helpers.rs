@@ -15,7 +15,7 @@ use crate::contract::instantiate::instantiate;
 use crate::contract::msg::{ExecuteMsg, InitRoles, InstantiateMsg, QueryMsg};
 use crate::contract::query::query;
 use crate::contract::reply::reply;
-use crate::roles::{CANCEL_ROLE, EXECUTE_ROLE, SUBMIT_ROLE};
+use crate::roles::{CANCEL_ROLE, EXECUTE_ROLE, PAUSE_ROLE, SUBMIT_ROLE};
 use crate::state::State;
 
 pub fn init_state(api: &MockApi) -> State {
@@ -53,6 +53,7 @@ pub struct Actors {
     pub submitter: Addr,
     pub executor: Addr,
     pub canceller: Addr,
+    pub pauser: Addr,
 }
 
 /// Instantiated contract with an admin and one address per queue role.
@@ -63,13 +64,21 @@ pub fn setup_with_roles() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, Acto
         submitter: deps.api.addr_make("submitter"),
         executor: deps.api.addr_make("executor"),
         canceller: deps.api.addr_make("canceller"),
+        pauser: deps.api.addr_make("pauser"),
     };
-    let roles = [DEFAULT_ADMIN_ROLE, SUBMIT_ROLE, EXECUTE_ROLE, CANCEL_ROLE];
+    let roles = [
+        DEFAULT_ADMIN_ROLE,
+        SUBMIT_ROLE,
+        EXECUTE_ROLE,
+        CANCEL_ROLE,
+        PAUSE_ROLE,
+    ];
     let addresses = [
         &actors.admin,
         &actors.submitter,
         &actors.executor,
         &actors.canceller,
+        &actors.pauser,
     ];
     let msg = InstantiateMsg {
         roles: Some(InitRoles {

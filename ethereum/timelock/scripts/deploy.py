@@ -22,6 +22,7 @@ DEFAULT_MANIFEST = Path(__file__).parent / "deployment_manifest.json"
 SUBMIT_ROLE = keccak(text="SUBMIT_ROLE")
 EXECUTE_ROLE = keccak(text="EXECUTE_ROLE")
 CANCEL_ROLE = keccak(text="CANCEL_ROLE")
+PAUSE_ROLE = keccak(text="PAUSE_ROLE")
 
 
 def load_manifest() -> tuple[dict, dict]:
@@ -60,6 +61,7 @@ def main():
     submitter_wallet = network_manifest.get("submitter_wallet", deployer.address)
     executor_wallet = network_manifest.get("executor_wallet", deployer.address)
     canceller_wallet = network_manifest.get("canceller_wallet", deployer.address)
+    pauser_wallet = network_manifest.get("pauser_wallet", deployer.address)
 
     if not bridge:
         raise SystemExit(
@@ -81,6 +83,7 @@ def main():
     contract.grantRole(SUBMIT_ROLE, submitter_wallet, sender=deployer)
     contract.grantRole(EXECUTE_ROLE, executor_wallet, sender=deployer)
     contract.grantRole(CANCEL_ROLE, canceller_wallet, sender=deployer)
+    contract.grantRole(PAUSE_ROLE, pauser_wallet, sender=deployer)
 
     network_manifest["contract_address"] = contract.address
     network_manifest["deployer_address"] = deployer.address
